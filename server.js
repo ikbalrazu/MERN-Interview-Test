@@ -18,9 +18,11 @@ app.get("/",(req,res)=>{
 // API to save the drawing
 app.post("/api/drawing", async (req, res) => {
     try {
-        const { elements } = req.body;
+        const { elements, title } = req.body;
+
+        console.log(title);
   
-        const drawing = new Drawing({ elements });
+        const drawing = new Drawing({ title, elements });
         await drawing.save();
   
         res.status(201).json({ message: "Drawing saved successfully!" });
@@ -35,7 +37,7 @@ app.get("/api/drawings/:id", async (req, res) => {
         const id = req.params.id;
         console.log(id);
         const drawings = await Drawing.findById(id);
-        console.log(drawings);
+        // console.log(drawings);
         res.status(200).json(drawings);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch drawings" });

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 // Define the Drawing schema
 const drawingSchema = new mongoose.Schema({
+  title: { type: String },
     elements: [
       {
         type: { type: String },
@@ -9,11 +10,18 @@ const drawingSchema = new mongoose.Schema({
         end: { x: Number, y: Number },
         points: [{ x: Number, y: Number }],
         center: { x: Number, y: Number },
+        height: Number,
+        width: Number,
         radius: Number,
         color: String,
+        text: String,
+        x: Number,
+        y: Number,
         lineWidth: Number,
       }
-    ]
+    ],
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
   
 const Drawing = mongoose.model("Drawing", drawingSchema);
