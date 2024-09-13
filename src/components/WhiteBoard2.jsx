@@ -9,6 +9,8 @@ const WhiteBoard2 = () => {
   const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
   const [drawingElements, setDrawingElements] = useState([]);
 
+  const [redoStack, setRedoStack] = useState([]);
+
   // Prepare the canvas context when the component mounts
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -28,7 +30,21 @@ const WhiteBoard2 = () => {
     ctxRef.current.beginPath();
     ctxRef.current.moveTo(offsetX,offsetY)
     setStartPoint({ x: offsetX, y: offsetY });
-    setIsDrawing(true);
+    setRedoStack([]);  // Clear redo stack when new drawing starts
+    if(currentTool === "text"){
+      // When text tool is selected, prompt for text input
+      const text = prompt("Enter text: ");
+      if(text){
+        addText(offsetX, offsetY, text);
+        setDrawingElements((prev)=> [
+          ...prev,
+          {type: "text", x: offsetX, y: offsetY, text, color: "black"}
+        ]);
+      }
+    }else{
+      setIsDrawing(true);
+    }
+    
   };
 
   // Handle mouse move event to draw on the canvas
@@ -83,7 +99,17 @@ const WhiteBoard2 = () => {
       };
       drawCircle(startPoint.x, startPoint.y, radius);
     }else if(currentTool === "rectangle"){
-        ctx.strokeRect(startPoint.x, startPoint.y, width, height);
+      const width = offsetX - startPoint.x;
+      const height = offsetY - startPoint.y; 
+      // ctx.strokeRect(startPoint.x, startPoint.y, width, height);
+      newElement = {
+        type: "rectangle",
+        start: { x: startPoint.x, y: startPoint.y },
+        width,
+        height,
+        color: "black",
+      };
+      drawRectangle(startPoint.x, startPoint.y, width, height);
     }
 
     if (newElement.type) {
@@ -108,9 +134,21 @@ const WhiteBoard2 = () => {
     ctx.stroke();
   };
 
+  // Draw a rectangle
   const drawRectangle = (rx, ry, width, height) => {
-    ctx.strokeRect(startPoint.x, startPoint.y, width, height);
+    const ctx = ctxRef.current;
+    ctx.beginPath();
+    ctx.strokeRect(rx, ry, width, height);
+    
   }
+
+  // Function to add text to the canvas
+  const addText = (x, y, text) => {
+    const ctx = ctxRef.current;
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText(text, x, y);
+  };
 
   // Clear the canvas and reset elements
   const clearCanvas = () => {
@@ -121,6 +159,7 @@ const WhiteBoard2 = () => {
 
   const saveDrawing = async () => {
     try {
+      console.log(drawingElements);
       await axios.post("http://localhost:5000/api/drawing", {
         elements: drawingElements,
       });
@@ -155,7 +194,19 @@ const WhiteBoard2 = () => {
     setDrawingElements((prev) => {
       const updatedElements = prev.slice(0, -1);
       redrawCanvas(updatedElements);
+      setRedoStack((redo) => [...redo, prev[prev.length - 1]]); // Add the undone element
       return updatedElements;
+    });
+  };
+
+  // Redo the last undone action
+  const redoDrawing = () => {
+    setRedoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const lastUndoneElement = prev[prev.length - 1];
+      setDrawingElements((elements) => [...elements, lastUndoneElement]);
+      redrawCanvas([...drawingElements, lastUndoneElement]);
+      return prev.slice(0, -1); // Remove the redone element from redo stack
     });
   };
 
@@ -175,6 +226,10 @@ const WhiteBoard2 = () => {
           ctx.lineTo(point.x, point.y);
         });
         ctx.stroke();
+      }else if (element.type === "rectangle") {
+        ctx.strokeRect(element.start.x, element.start.y, element.width, element.height);
+      }else if (element.type === "text") {
+        addText(element.x, element.y, element.text);
       }
     });
 };
@@ -185,10 +240,13 @@ const WhiteBoard2 = () => {
         <button onClick={() => setCurrentTool("pencil")}>Pencil</button>
         <button onClick={() => setCurrentTool("line")}>Line</button>
         <button onClick={() => setCurrentTool("circle")}>Circle</button>
+        <button onClick={() => setCurrentTool("rectangle")}>Rectangle</button>
+        <button onClick={() => setCurrentTool("text")}>Text</button>
         <button onClick={clearCanvas}>Clear</button>
         <button onClick={saveDrawing}>Save Drawing</button>
         <button onClick={fetchDrawings}>Library</button>
         <button onClick={undoDrawing}>Undo</button>
+        <button onClick={redoDrawing}>Redo</button>
       </div>
       <canvas
         id="canvas"
