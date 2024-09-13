@@ -11,6 +11,8 @@ const WhiteBoard2 = () => {
 
   const [redoStack, setRedoStack] = useState([]);
 
+  const [currentPencilStroke, setCurrentPencilStroke] = useState([]); // Store points for the current pencil stroke
+
   // Prepare the canvas context when the component mounts
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -27,11 +29,18 @@ const WhiteBoard2 = () => {
   const startDrawing = (event) => {
     const { offsetX, offsetY } = event.nativeEvent;
     // const ctx = ctxRef.current
-    ctxRef.current.beginPath();
-    ctxRef.current.moveTo(offsetX,offsetY)
+    // ctxRef.current.beginPath();
+    // ctxRef.current.moveTo(offsetX,offsetY)
     setStartPoint({ x: offsetX, y: offsetY });
     setRedoStack([]);  // Clear redo stack when new drawing starts
-    if(currentTool === "text"){
+
+    if (currentTool === "pencil") {
+      setIsDrawing(true);
+      setCurrentPencilStroke([{ x: offsetX, y: offsetY }]); // Start tracking the stroke
+      ctxRef.current.beginPath();
+      ctxRef.current.moveTo(offsetX, offsetY);
+    }
+    else if(currentTool === "text"){
       // When text tool is selected, prompt for text input
       const text = prompt("Enter text: ");
       if(text){
@@ -62,10 +71,14 @@ const WhiteBoard2 = () => {
     //   ctx.stroke();
         ctxRef.current.lineTo(offsetX, offsetY);
         ctxRef.current.stroke();
-        setDrawingElements((prev) => [
-            ...prev,
-            { type: "pencil", points: [{ x: offsetX, y: offsetY }], color: "black", lineWidth: 1 },
-        ]);
+
+        // setDrawingElements((prev) => [
+        //     ...prev,
+        //     { type: "pencil", points: [{ x: offsetX, y: offsetY }], color: "black", lineWidth: 1 },
+        // ]);
+
+        setCurrentPencilStroke((prev) => [...prev, { x: offsetX, y: offsetY }]); // Add each point to the current stroke
+
     }
   };
 
@@ -111,6 +124,14 @@ const WhiteBoard2 = () => {
       };
       drawRectangle(startPoint.x, startPoint.y, width, height);
     }
+    else if (currentTool === "pencil" && currentPencilStroke.length > 0) {
+      // Save the complete pencil stroke as one element
+      setDrawingElements((prev) => [
+        ...prev,
+        { type: "pencil", points: currentPencilStroke, color: "black", lineWidth: 1 },
+      ]);
+      setCurrentPencilStroke([]); // Reset the stroke
+    }
 
     if (newElement.type) {
       setDrawingElements((prev) => [...prev, newElement]);
@@ -155,13 +176,16 @@ const WhiteBoard2 = () => {
     const ctx = ctxRef.current;
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     setDrawingElements([]);
+    setRedoStack([]);
   };
 
   const saveDrawing = async () => {
     try {
       console.log(drawingElements);
+      let title = (Math.random() + 1).toString(36).substring(7);
       await axios.post("http://localhost:5000/api/drawing", {
         elements: drawingElements,
+        title: title
       });
       alert("Drawing saved successfully!");
     } catch (error) {
@@ -170,7 +194,7 @@ const WhiteBoard2 = () => {
   };
 
   const fetchDrawings = async () => {
-    const id = "66e2e0c6424e1da8ea4ee2ff"
+    const id = "66e4490d843fc3ce1c6695b9"
     const response = await axios.get(`http://localhost:5000/api/drawings/${id}`);
     console.log(response);
     const savedElements = response?.data?.elements; // Get the first drawing for simplicity
@@ -180,9 +204,30 @@ const WhiteBoard2 = () => {
       }else if(element.type === "circle"){
         drawCircle(element.center.x, element.center.y, element.radius);
       }else if(element.type === "pencil"){
+        // const ctx = ctxRef.current;
+        // console.log(element.points[0].x, element.points[0].y)
+        // ctx.lineTo(element.points[0].x, element.points[0].y);
+        // ctx.stroke();
+
         const ctx = ctxRef.current;
-        ctx.lineTo(element.points[0].x, element.points[0].y);
-        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(element.points[0].x, element.points[0].y); // Start from the first point
+
+        element.points.forEach((point, index) => {
+          if (index > 0) {
+            ctx.lineTo(point.x, point.y); // Draw lines to each subsequent point
+          }
+        });
+
+        ctx.stroke(); // Complete the stroke
+
+      }else if(element.type === "rectangle"){
+        const width = element.start.x - startPoint.x;
+        const height = element.start.y - startPoint.y;
+        drawRectangle(element.start.x, element.start.y, width, height)
+        console.log("rectangle")
+      }else if(element.type === "text"){
+        addText(element.x, element.y, element.text)
       }
       // Similarly for pencil and circle
     });
@@ -192,9 +237,10 @@ const WhiteBoard2 = () => {
   const undoDrawing = () => {
     // Remove the last drawing element
     setDrawingElements((prev) => {
+      if(prev.length === 0) return prev;
       const updatedElements = prev.slice(0, -1);
-      redrawCanvas(updatedElements);
       setRedoStack((redo) => [...redo, prev[prev.length - 1]]); // Add the undone element
+      redrawCanvas(updatedElements);
       return updatedElements;
     });
   };
@@ -222,8 +268,13 @@ const WhiteBoard2 = () => {
         drawCircle(element.center.x, element.center.y, element.radius);
       } else if (element.type === "pencil") {
         ctx.beginPath();
-        element.points.forEach((point) => {
-          ctx.lineTo(point.x, point.y);
+        element.points.forEach((point, index) => {
+          if(index === 0){
+            ctx.moveTo(point.x, point.y);
+          }else{
+            ctx.lineTo(point.x, point.y);
+          }
+          
         });
         ctx.stroke();
       }else if (element.type === "rectangle") {
