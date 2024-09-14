@@ -1,8 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 
 const WhiteBoard2 = () => {
-    const canvasRef = useRef(null);
+  const {state} = useLocation();
+
+  const canvasRef = useRef(null);
   const ctxRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentTool, setCurrentTool] = useState("select");
@@ -15,6 +18,7 @@ const WhiteBoard2 = () => {
 
   // Prepare the canvas context when the component mounts
   useEffect(() => {
+    console.log(state);
     const canvas = canvasRef.current;
     canvas.width = 800;
     canvas.height = 600;
@@ -194,7 +198,7 @@ const WhiteBoard2 = () => {
   };
 
   const fetchDrawings = async () => {
-    const id = "66e4490d843fc3ce1c6695b9"
+    const id = "66e44d0ba9bf24ff00aa3ba3"
     const response = await axios.get(`http://localhost:5000/api/drawings/${id}`);
     console.log(response);
     const savedElements = response?.data?.elements; // Get the first drawing for simplicity
@@ -222,9 +226,7 @@ const WhiteBoard2 = () => {
         ctx.stroke(); // Complete the stroke
 
       }else if(element.type === "rectangle"){
-        const width = element.start.x - startPoint.x;
-        const height = element.start.y - startPoint.y;
-        drawRectangle(element.start.x, element.start.y, width, height)
+        drawRectangle(element.start.x, element.start.y, element.width, element.height)
         console.log("rectangle")
       }else if(element.type === "text"){
         addText(element.x, element.y, element.text)
