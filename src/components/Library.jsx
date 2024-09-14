@@ -1,12 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { Button, Container, Row, Col, Spinner } from 'react-bootstrap';
 
 const Library = () => {
 
   const navigate = useNavigate();
     const [drawings, setDrawings] = useState([]);
     const canvasRef = useRef(null);
+    const ctxRef = useRef(null);
+
+    const [loading, setLoading] = useState(true);
 
     // Fetch stored drawings from the backend
     useEffect(() => {
@@ -17,6 +21,8 @@ const Library = () => {
             setDrawings(response.data.alldrawings); // Assuming the API returns an array of drawings
         } catch (error) {
             console.error("Error fetching drawings:", error);
+        }finally{
+          setLoading(false);
         }
         };
 
@@ -27,6 +33,10 @@ const Library = () => {
     const renderDrawingToImage = (elements) => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
+        ctx.lineCap = "round";
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 1;
+      ctxRef.current = ctx;
 
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -39,7 +49,22 @@ const Library = () => {
             drawCircle(ctx, element.center.x, element.center.y, element.radius);
         } else if (element.type === "text") {
             drawText(ctx, element.x, element.y, element.text);
-        }
+        }else if (element.type === "rectangle") {
+          drawRectangle(element.start.x, element.start.y, element.width, element.height);
+      }else if(element.type === "pencil"){
+        const ctx = ctxRef.current;
+        ctx.beginPath();
+        ctx.moveTo(element.points[0].x, element.points[0].y); // Start from the first point
+
+        element.points.forEach((point, index) => {
+          if (index > 0) {
+            ctx.lineTo(point.x, point.y); // Draw lines to each subsequent point
+          }
+        });
+
+        ctx.stroke(); // Complete the stroke
+
+      }
         // Add other element types here (e.g., rectangle, pencil strokes)
         });
 
@@ -67,6 +92,14 @@ const Library = () => {
         ctx.fillText(text, x, y);
     };
 
+    // Draw a rectangle
+  const drawRectangle = (rx, ry, width, height) => {
+    const ctx = ctxRef.current;
+    ctx.beginPath();
+    ctx.strokeRect(rx, ry, width, height);
+    
+  }
+
     // Handle clicking on a drawing card (e.g., load it into main canvas)
     const handleCardClick = (drawing) => {
         // Logic to load the drawing into the main canvas for viewing/editing
@@ -74,8 +107,21 @@ const Library = () => {
         navigate(`/drawing/${drawing._id}`, {state:drawing});
     };
 
+    const handleNewDrawing = () => {
+      navigate('/newdrawing');
+    };
+
   return (
-    <div>
+    <Container>
+      <Row className="my-4">
+        <Col>
+          <h1>Drawing Library</h1>
+          <Button variant="primary" onClick={handleNewDrawing}>
+            New Drawing
+          </Button>
+        </Col>
+      </Row>
+      <Row>
       {/* Hidden Canvas for Rendering Drawing Images */}
       <canvas
         ref={canvasRef}
@@ -83,11 +129,17 @@ const Library = () => {
         width={300}
         height={300}
       ></canvas>
-
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
+      {loading ? (
+        <div className="text-center" style={{ width: '100%' }}>
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+        </div>
+      ):(
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: 'center' }}>
         {drawings.map((drawing,index) => (
           <div
-            key={drawing.id}
+            key={index}
             onClick={() => handleCardClick(drawing)}
             style={{
               border: "1px solid #ccc",
@@ -105,7 +157,10 @@ const Library = () => {
           </div>
         ))}
       </div>
-    </div>
+      )}
+      
+      </Row>
+    </Container>
   )
 }
 
