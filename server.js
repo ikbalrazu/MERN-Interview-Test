@@ -31,7 +31,32 @@ app.post("/api/drawing", async (req, res) => {
     }
 });
 
-// API to get all drawings
+app.put("/api/drawing",async(req,res)=>{
+    try {
+
+        const UpdatedDrawing = {
+            title: req.body.title,
+            elements: req.body.elements
+        }
+        const drawing = await Drawing.findByIdAndUpdate(req.body.id, UpdatedDrawing,
+            {
+                new: true,
+                runValidators: true,
+                useFindAndModify: false,
+            }
+        );
+
+        res.status(200).json({
+            success: true,
+            
+        })
+        
+    } catch (error) {
+        console.log(error.message);
+    }
+})
+
+// API to get drawings by id
 app.get("/api/drawings/:id", async (req, res) => {
     try {
         const id = req.params.id;
@@ -40,7 +65,20 @@ app.get("/api/drawings/:id", async (req, res) => {
         // console.log(drawings);
         res.status(200).json(drawings);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch drawings" });
+        res.status(500).json({ error: "Failed to fetch drawings by id" });
+    }
+});
+
+// API to get all drawings
+app.get("/api/drawings", async (req, res) => {
+    try {
+        const alldrawings = await Drawing.find();
+        res.status(200).json({
+            success:true,
+            alldrawings,
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch all drawings" });
     }
 });
 
