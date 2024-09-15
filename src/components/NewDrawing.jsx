@@ -1,11 +1,10 @@
 import React from 'react'
-import WhiteBoard2 from './WhiteBoard2'
+import Whiteboard from './Whiteboard'
 
 const NewDrawing = () => {
-    // window.location.reload();
   return (
     <div>
-        <WhiteBoard2/>
+        <Whiteboard/>
     </div>
   )
 }
