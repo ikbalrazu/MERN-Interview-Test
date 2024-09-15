@@ -30,8 +30,8 @@ const Whiteboard = () => {
       fetchDrawings();
     } else {
       const canvas = canvasRef.current;
-      canvas.width = 800;
-      canvas.height = 600;
+      canvas.width = window.innerWidth * 0.9;
+      canvas.height = window.innerHeight * 0.8;
       const ctx = canvas.getContext("2d");
       ctx.lineCap = "round";
       ctx.strokeStyle = selectedColor;
@@ -324,6 +324,14 @@ const Whiteboard = () => {
             <Form.Control onChange={(e) => { setTitle(e.target.value) }} aria-label="First name" value={title} />
           </InputGroup>
         </Col>
+        <Col  className="d-flex flex-row justify-content-center gap-2 mb-1">
+        <Button
+            onClick={saveDrawing}
+            disabled={drawingElements.length === 0}
+          >Save Drawing</Button>
+          <button onClick={() => { navigate("/") }}>Library</button>
+          <button onClick={NewDrawingHandler}>New Drawing</button>
+        </Col>
         <Col></Col>
       </Row>
       <Row>
@@ -376,25 +384,19 @@ const Whiteboard = () => {
           />
           </OverlayTrigger>
         </Col>
-        <Col xs={8}>
+        <Col xs={11}>
           <canvas
             id="canvas"
             ref={canvasRef}
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={finishDrawing}
-            style={{ border: "1px solid black" }}
+            style={{ border: "1px solid black"}}
           />
-        </Col>
-        <Col xs={2} className="d-flex flex-column gap-2">
-          <Button
-            onClick={saveDrawing}
-            disabled={drawingElements.length === 0}
-          >Save Drawing</Button>
-          <button onClick={() => { navigate("/") }}>Library</button>
-          <button onClick={NewDrawingHandler}>New Drawing</button>
+    
         </Col>
       </Row>
+      
     </Container>
   )
 }
