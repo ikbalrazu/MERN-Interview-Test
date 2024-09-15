@@ -46,10 +46,13 @@ app.put("/api/drawing",async(req,res)=>{
             }
         );
 
-        res.status(200).json({
-            success: true,
-            
-        })
+        if(drawing){
+            res.status(200).json({
+                success: true,
+                
+            })
+        }
+        
         
     } catch (error) {
         console.log(error.message);
@@ -72,7 +75,7 @@ app.get("/api/drawings/:id", async (req, res) => {
 // API to get all drawings
 app.get("/api/drawings", async (req, res) => {
     try {
-        const alldrawings = await Drawing.find();
+        const alldrawings = await Drawing.find().sort({ updatedAt: -1 });
         res.status(200).json({
             success:true,
             alldrawings,
@@ -81,6 +84,30 @@ app.get("/api/drawings", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch all drawings" });
     }
 });
+
+//API for delete drawing
+app.delete("/api/drawings/:drawingId",async(req,res)=>{
+    try {
+        const deletedrawing = await Drawing.deleteOne({_id:req.params.drawingId});
+        console.log(deletedrawing);
+
+        // if(!deletedrawing){
+        //     console.log("Drawing does not exist with id: ");
+        // }else{
+        //     console.log("Drawing deleted successfully!");
+        // }
+
+        // await deletedrawing.remove();
+
+        res.status(200).json({
+            success:true,
+            delete: deletedrawing
+        })
+
+    } catch (error) {
+        console.log(error.message);
+    }
+})
 
 app.listen(PORT, function(error){
     if(error){
