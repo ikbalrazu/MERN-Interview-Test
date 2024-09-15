@@ -1,14 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Button, Container, Row, Col, Spinner } from 'react-bootstrap';
+import { Button, Container, Row, Col, Spinner, Dropdown, Card  } from 'react-bootstrap';
+import {format} from 'timeago.js';
 
 const Library = () => {
 
   const navigate = useNavigate();
     const [drawings, setDrawings] = useState([]);
-    const canvasRef = useRef(null);
-    const ctxRef = useRef(null);
+    const canvasRef = useRef();
+    const ctxRef = useRef();
 
     const [loading, setLoading] = useState(true);
 
@@ -111,6 +112,17 @@ const Library = () => {
       navigate('/newdrawing');
     };
 
+    const handleDeleteDrawing = async (drawingId) => {
+      try {
+        console.log(drawingId);
+        const data = await axios.delete(`http://localhost:5000/api/drawings/${drawingId}`);
+        console.log(data);
+        setDrawings(drawings.filter(drawing => drawing._id !== drawingId));
+      } catch (error) {
+        console.error("Error deleting drawing:", error);
+      }
+    };
+
   return (
     <Container>
       <Row className="my-4">
@@ -136,27 +148,71 @@ const Library = () => {
         </Spinner>
         </div>
       ):(
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: 'center' }}>
-        {drawings.map((drawing,index) => (
-          <div
-            key={index}
-            onClick={() => handleCardClick(drawing)}
-            style={{
-              border: "1px solid #ccc",
-              margin: "10px",
-              padding: "10px",
-              cursor: "pointer",
-            }}
-          >
-            <img
-              src={renderDrawingToImage(drawing.elements)}
-              alt={`Drawing ${drawing.id}`}
-              style={{ width: "150px", height: "150px" }}
+        <Row xs={1} md={2} lg={3} className="g-3">
+          {drawings.map((drawing, index) => (
+            <Col key={index}>
+            <Card className="h-100">
+            <Card.Img 
+            variant="top"
+            src={renderDrawingToImage(drawing.elements)}
+            alt={`Drawing ${drawing._id}`}
+            style={{ height: "200px", objectFit: "cover", cursor: "pointer", objectPosition:'5% 90%' }}
+            onClick={() => handleCardClick(drawing)} 
             />
-            <p>{drawing.title}</p>
-          </div>
-        ))}
-      </div>
+            <Card.Body className='d-flex flex-column'>
+              <div style={{display:"flex",flexDirection:"row",justifyContent:"center"}}>
+              <Card.Title>{drawing.title}</Card.Title>
+              </div>
+            <Button
+              variant="danger"
+              size="sm"
+              // style={{ position: "absolute", top: "10px", right: "10px" }}
+              onClick={() => handleDeleteDrawing(drawing._id)}
+            >
+              Delete
+            </Button>
+            <Card.Footer className='d-flex justify-content-center'>
+            <small className="text-muted">{format(drawing.updatedAt)}</small>
+            </Card.Footer>
+            </Card.Body>
+            </Card>
+            </Col>
+            
+          ))}
+        </Row>
+      // <div style={{ display: "flex", flexWrap: "wrap", justifyContent: 'center' }}>
+      //   {drawings.map((drawing,index) => (
+      //     <div
+      //       key={index}
+      //       style={{
+      //         border: "1px solid #ccc",
+      //         margin: "10px",
+      //         padding: "10px",
+      //         // position: "relative",
+      //         // cursor: "pointer",
+      //       }}
+      //     >
+      //       <div style={{display:"flex", flexDirection:"column", justifyContent:"center"}}>
+      //       <img
+      //         onClick={() => handleCardClick(drawing)}
+      //         src={renderDrawingToImage(drawing.elements)}
+      //         alt={`Drawing ${drawing.id}`}
+      //         style={{ width: "150px", height: "150px", cursor: "pointer" }}
+              
+      //       />
+      //       <p>{drawing.title}</p>
+      //       <Button
+      //             variant="danger"
+      //             size="sm"
+      //             // style={{ position: "absolute", top: "10px", right: "10px" }}
+      //             onClick={() => handleDeleteDrawing(drawing._id)}
+      //         >
+      //         Delete
+      //       </Button>
+      //       </div>
+      //     </div>
+      //   ))}
+      // </div>
       )}
       
       </Row>

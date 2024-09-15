@@ -8,8 +8,8 @@ const WhiteBoard2 = () => {
   const {state} = useLocation();
   const navigate = useNavigate();
 
-  const canvasRef = useRef(null);
-  const ctxRef = useRef(null);
+  const canvasRef = useRef();
+  const ctxRef = useRef();
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentTool, setCurrentTool] = useState("select");
   const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
