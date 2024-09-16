@@ -32,6 +32,8 @@ const Whiteboard = () => {
       const canvas = canvasRef.current;
       canvas.width = window.innerWidth * 0.9;
       canvas.height = window.innerHeight * 0.8;
+      // canvas.width = 900;
+      // canvas.height = 700;
       const ctx = canvas.getContext("2d");
       ctx.lineCap = "round";
       ctx.strokeStyle = selectedColor;
@@ -192,17 +194,23 @@ const Whiteboard = () => {
   const saveDrawing = async () => {
     try {
       if (state) {
-        await axios.put("/drawings/update", {
+        const drawing = await axios.put("/drawings/update", {
           elements: drawingElements,
           title: title,
           id: state._id
         });
+        if(!drawing){
+          alert("Something went wrong! Updated Failed");
+        }
         alert("Drawing updated successfully!");
       } else {
-        await axios.post("/drawings/new", {
+        const drawing = await axios.post("/drawings/new", {
           elements: drawingElements,
           title: title,
         });
+        if(!drawing){
+          alert("Something went wrong! Saved Failed");
+        }
         alert("Drawing saved successfully!");
       }
 
@@ -335,7 +343,7 @@ const Whiteboard = () => {
         <Col></Col>
       </Row>
       <Row>
-        <Col xs={1} className="d-flex flex-column align-items-center p-2" style={{ backgroundColor: "#f8f9fa" }}>
+        <Col sm={1} className="d-flex flex-column align-items-center p-2" style={{ backgroundColor: "#f8f9fa" }}>
           <h4>Tools</h4>
           <OverlayTrigger placement="right" overlay={<Tooltip id="tooltip-pencil">Pencil</Tooltip>}>
             <button variant="primary" className="mb-2" onClick={() => setCurrentTool("pencil")}><FaPencilAlt className="me-2" /></button>
@@ -384,7 +392,7 @@ const Whiteboard = () => {
           />
           </OverlayTrigger>
         </Col>
-        <Col xs={11}>
+        <Col sm={11}>
           <canvas
             id="canvas"
             ref={canvasRef}
