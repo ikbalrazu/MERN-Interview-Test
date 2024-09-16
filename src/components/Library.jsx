@@ -18,6 +18,9 @@ const Library = () => {
   const fetchDrawings = async () => {
     try {
       const response = await axios.get("/drawings");
+      if(response.data.alldrawings.length === 0){
+        setError("No drawing found!");
+      }
       setDrawings(response.data.alldrawings);
     } catch (error) {
       setError("Failed to load drawings. Please try again later.");
@@ -28,7 +31,7 @@ const Library = () => {
 
   useEffect(() => {
     fetchDrawings();
-  }, []);
+  }, [error]);
 
   const renderDrawingToImage = (elements) => {
     const canvas = canvasRef.current;

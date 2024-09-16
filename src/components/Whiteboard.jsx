@@ -30,10 +30,8 @@ const Whiteboard = () => {
       fetchDrawings();
     } else {
       const canvas = canvasRef.current;
-      canvas.width = window.innerWidth * 0.9;
-      canvas.height = window.innerHeight * 0.8;
-      // canvas.width = 900;
-      // canvas.height = 700;
+      canvas.width = 900;
+      canvas.height = 700;
       const ctx = canvas.getContext("2d");
       ctx.lineCap = "round";
       ctx.strokeStyle = selectedColor;
